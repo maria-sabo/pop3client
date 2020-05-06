@@ -6,7 +6,6 @@ public class ShortMessage {
         this.number = number;
         this.size = size;
     }
-
     public int getNumber() {
         return number;
     }
@@ -14,14 +13,4 @@ public class ShortMessage {
     public long getSize() {
         return size;
     }
-
-
-    public void setNumber(int number) {
-        this.number = number;
-    }
-
-    public void setSize(long size) {
-        this.size = size;
-    }
-
 }

@@ -3,13 +3,19 @@ import java.io.*;
 public class Main {
     public static void main(String[] args) throws IOException {
         POP3Client client = new POP3Client();
-        client.setDebug(true);
+        int port = 110;
+        client.setDebug(false);
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
         System.out.println("Enter host: ");
         String host = br.readLine();
+
         System.out.println("Enter port to connect the host: ");
-        int port = Integer.parseInt(br.readLine());
+        try {
+            port = Integer.parseInt(br.readLine());
+        } catch (NumberFormatException ex) {
+            System.out.println("A wrong integer was entered");
+        }
         client.connect(host, port);
 
         System.out.println("Enter your login: ");
@@ -41,7 +47,7 @@ public class Main {
                     client.cmdList();
                     break;
                 case "RETR":
-                    client.cmdRetrieve(br, client.listOfNewMessages(host, port, login, password));
+                    client.cmdRetrieve(br);
                     break;
                 case "TOP":
                     client.cmdTop(br);
@@ -56,7 +62,7 @@ public class Main {
                     client.cmdMarkMsgsDel(br);
                     break;
                 case "DELETEMARKED":
-                    client.cmdDeleteMarkedMsgs("mail.ngs.ru", 110, "masha129087@ngs.ru", "kek755");
+                    client.cmdDeleteMarkedMsgs(host, port, login, password);
                     break;
                 case "RSETQ":
                     client.cmdRsetDelete();

@@ -3,16 +3,13 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 
-
 public class POP3Client {
     private Socket socket;
-
     private boolean debug = false;
 
     private BufferedReader reader;
     private BufferedWriter writer;
     private ArrayList<RecvMessage> listOfMessages = new ArrayList<>();
-
 
     public boolean isDebug() {
         return debug;
@@ -32,7 +29,7 @@ public class POP3Client {
         reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         if (debug)
-            System.out.println("Connected to the host");
+            System.out.println("Socket created. Connected to the host");
         readResponseLine();
     }
 
@@ -74,6 +71,7 @@ public class POP3Client {
         if (sendCommand("USER " + login).startsWith("Server has returned an error")
                 || sendCommand("PASS " + password).startsWith("Server has returned an error"))
             System.out.println("Failed to log in");
+        else System.out.println("Log in successful");
     }
 
     public void logout() throws IOException {
@@ -109,7 +107,7 @@ public class POP3Client {
         }
     }
 
-    public RecvMessage retrieveMsg(int num) throws IOException {
+    private RecvMessage retrieveMsg(int num) throws IOException {
         ArrayList<RecvMessage.HeaderPair> headers = new ArrayList<>();
         sendCommand("RETR " + num);
         String value = "", header = "", response;
@@ -143,7 +141,7 @@ public class POP3Client {
                 message.setHeaders(headers);
                 message.setBody(body.toString());
             } else {
-                message = new RecvMessage(headers, body.toString(), num, 0, 0);
+                message = new RecvMessage(headers, body.toString(), num);
                 listOfMessages.add(message);
             }
             return message;
@@ -166,26 +164,21 @@ public class POP3Client {
     }
 
 
-    public void cmdRetrieve(BufferedReader br, ArrayList<Integer> listNumberOfNewMsgs) throws IOException {
+    public void cmdRetrieve(BufferedReader br) throws IOException {
         int num, numAll;
-        System.out.println("Enter message number (0 for retrieving all new messages): ");
+        System.out.println("Enter message number: ");
         try {
             num = Integer.parseInt(br.readLine());
             numAll = getNumberOfMsgs();
             if (num > numAll || num < 0) {
                 System.out.println("A message with this number does not exist\n");
-            }
-            if (num == 0) {
-                for (int n : listNumberOfNewMsgs) {
-                    printMsg(retrieveMsg(n));
-                }
-            } else {
-                printMsg(retrieveMsg(num));
-            }
-        } catch (NumberFormatException ex) {
+            } else printMsg(retrieveMsg(num));
+        } catch (
+                NumberFormatException ex) {
             System.out.println("A wrong integer was entered\n");
         }
     }
+
 
     public void cmdTop(BufferedReader br) throws IOException {
         int num = 0, numAll, count = 0;
@@ -228,14 +221,14 @@ public class POP3Client {
                     System.out.println(response);
                 }
             } else {
-                System.out.println(((sendCommand("UIDL " + num)).split(" "))[1] + " " + ((sendCommand("UIDL " + num)).split(" "))[2]) ;
+                System.out.println(((sendCommand("UIDL " + num)).split(" "))[1] + " " + ((sendCommand("UIDL " + num)).split(" "))[2]);
             }
         } catch (NumberFormatException ex) {
             System.out.println("A wrong integer was entered\n");
         }
     }
 
-    public ArrayList<Integer> listOfNewMessages(String host, int port, String login, String password) throws IOException {
+    public void listOfNewMessages(String host, int port, String login, String password) throws IOException {
         disconnect();
         connect(host, port);
         login(login, password);
@@ -259,18 +252,15 @@ public class POP3Client {
                 listOfMessages.add(full_msg);
             }
         }
-        ArrayList<Integer> l = new ArrayList<>();
         long size_all = 0;
         for (ShortMessage el : listOfNewMsg) {
             System.out.println(el.getNumber() + " " + el.getSize());
             size_all += el.getSize();
-            l.add(el.getNumber());
         }
         if (listOfNewMsg.size() == 0)
             System.out.println("No new messages");
         System.out.println("Number of new messages: " + listOfNewMsg.size());
         System.out.println("Summary size: " + size_all);
-        return l;
     }
 
 
@@ -282,15 +272,15 @@ public class POP3Client {
             for (String msg : msgsForDelete) {
                 nums.add(Integer.parseInt(msg));
             }
+            ArrayList<Integer> list = getListOfNumbers();
+            for (int num : nums) {
+                if (!list.contains(num)) {
+                    System.out.println("You have no message number: " + num);
+                } else sendCommand("DELE " + num);
+            }
+            System.out.println("You marked: " + nums);
         } catch (NumberFormatException ex) {
             System.out.println("A wrong integer was entered");
-        }
-        ArrayList<Integer> list = getListOfNumbers();
-        for (int num : nums) {
-            if (!list.contains(num)) {
-                System.out.println("You have no message number: " + num);
-            }
-            sendCommand("DELE " + num);
         }
     }
 
