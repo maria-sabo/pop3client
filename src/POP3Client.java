@@ -23,14 +23,15 @@ public class POP3Client {
         socket = new Socket();
         try {
             socket.connect(new InetSocketAddress(host, port));
+            reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            if (debug)
+                System.out.println("Socket created. Connected to the host");
+            readResponseLine();
         } catch (IOException ex) {
             System.out.println("Connection error");
         }
-        reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-        if (debug)
-            System.out.println("Socket created. Connected to the host");
-        readResponseLine();
+
     }
 
     public boolean isConnected() {
@@ -72,6 +73,7 @@ public class POP3Client {
                 || sendCommand("PASS " + password).startsWith("Server has returned an error"))
             System.out.println("Failed to log in");
         else System.out.println("Log in successful");
+
     }
 
     public void logout() throws IOException {
@@ -214,14 +216,15 @@ public class POP3Client {
             numAll = getNumberOfMsgs();
             if (num > numAll || num < 0) {
                 System.out.println("A message with this number does not exist\n");
-            }
-            if (num == 0) {
-                sendCommand("UIDL");
-                while (!(response = readResponseLine()).equals(".")) {
-                    System.out.println(response);
-                }
             } else {
-                System.out.println(((sendCommand("UIDL " + num)).split(" "))[1] + " " + ((sendCommand("UIDL " + num)).split(" "))[2]);
+                if (num == 0) {
+                    sendCommand("UIDL");
+                    while (!(response = readResponseLine()).equals(".")) {
+                        System.out.println(response);
+                    }
+                } else {
+                    System.out.println(((sendCommand("UIDL " + num)).split(" "))[1] + " " + ((sendCommand("UIDL " + num)).split(" "))[2]);
+                }
             }
         } catch (NumberFormatException ex) {
             System.out.println("A wrong integer was entered\n");
