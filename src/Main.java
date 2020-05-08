@@ -22,6 +22,7 @@ public class Main {
         String login = br.readLine();
         System.out.println("Enter your password: ");
         String password = br.readLine();
+        client.login(login, password);
         System.out.println(
                 "You can use commands: \n" +
                         "\tSTAT - to get the mailbox status\n" +
@@ -45,7 +46,7 @@ public class Main {
                     client.cmdList();
                     break;
                 case "RETR":
-                    client.cmdRetrieve(br);
+                    client.cmdRetrBig(br);
                     break;
                 case "TOP":
                     client.cmdTop(br);
@@ -73,7 +74,6 @@ public class Main {
                     System.out.println("Unexpected command: " + x);
             }
         } while (quit != 1);
-
         client.logout();
         client.disconnect();
     }

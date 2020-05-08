@@ -23,6 +23,7 @@ public class POP3Client {
         socket = new Socket();
         try {
             socket.connect(new InetSocketAddress(host, port));
+            socket.setReceiveBufferSize(22000000);
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             if (debug)
@@ -31,7 +32,6 @@ public class POP3Client {
         } catch (IOException ex) {
             System.out.println("Connection error");
         }
-
     }
 
     public boolean isConnected() {
@@ -50,6 +50,7 @@ public class POP3Client {
 
     protected String readResponseLine() throws IOException {
         String response = reader.readLine();
+
         if (debug) {
             System.out.println("server: " + response);
         }
@@ -73,7 +74,6 @@ public class POP3Client {
                 || sendCommand("PASS " + password).startsWith("Server has returned an error"))
             System.out.println("Failed to log in");
         else System.out.println("Log in successful");
-
     }
 
     public void logout() throws IOException {
@@ -298,6 +298,39 @@ public class POP3Client {
     public void cmdRsetDelete() throws IOException {
         String response = sendCommand("RSET");
         System.out.println(response);
+    }
+    public void wrF(int num){
+        String response;
+        try {
+            // \Users\Maria\IdeaProjects\pop3cl
+            File file = new File(String.valueOf(new File("C:\\file" + num)));
+            BufferedWriter writerf = new BufferedWriter(new FileWriter(file));
+
+            response =sendCommand("RETR " + num);
+            while (!(response = readResponseLine()).equals(".")) {
+                writerf.write(response + '\n');
+                writer.flush();
+                writerf.flush();
+            }
+            System.out.println("Successful");
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+    public void cmdRetrBig(BufferedReader br) {
+        int num, numAll;
+        String response;
+        System.out.println("Enter message number: ");
+        try {
+            num = Integer.parseInt(br.readLine());
+            numAll = getNumberOfMsgs();
+            if (num > numAll || num < 0) {
+                System.out.println("A message with this number does not exist\n");
+            } else wrF(num);
+        } catch (
+                NumberFormatException | IOException ex) {
+            System.out.println("A wrong integer was entered\n");
+        }
     }
 }
 
